@@ -1,5 +1,5 @@
 import os
-
+import sys
 from SAC_policy_visualize import SACPolicyForVisualize
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
@@ -24,6 +24,12 @@ import torch
 
 
 if __name__ == "__main__":
+    if len(sys.argv) >= 3:
+        train_seed, test_seed = int(sys.argv[1]), int(sys.argv[2])
+        print("load seeds from args")
+    else:
+        train_seed, test_seed = 53705, 50735
+        print("load seeds from default")
     config = {
         "model": SAC,
         "policy": SACPolicyForVisualize,
@@ -31,8 +37,8 @@ if __name__ == "__main__":
         "total_timesteps": 3000000,
         "batch_size": 512,
         "train_num_envs": 8,
-        "train_seed": 53705,
-        "test_seed": 50735,
+        "train_seed": train_seed,
+        "test_seed": test_seed,
         "policy_kwargs": {
             "activation_fn": torch.nn.ReLU,
             "net_arch": [64, 64],
@@ -80,28 +86,29 @@ if __name__ == "__main__":
     print(f"Std of rewards {np.std(rews):.4f}")
     print(f"IQM of game_lens {interquartile_mean(lengths):.4f}")
     print(f"goal ratio {np.mean(infors['goal']):.4f}")
-    env = KickToGoalGym(seed=config["test_seed"])
-    obs, _ = env.reset()
-    env.render()
-    values = list()
-    value = 0.0
-    game_len = 0
-    while True:
-        # By default, deterministic=False, so we use the stochastic policy
-        action, _states = model.predict(obs, deterministic=True)
-        obs, rewards, dones, _, infors = env.step(action)
-        env.render()
-        value += rewards
-        game_len += 1
-        time.sleep(1.0 / 30 / 100)
-        if dones:
-            print("len: {0:.4f}, value: {1:.4f}, goal: {2}".format(game_len, value, infors["goal"]))
-            # model.logger.record("eval/value", value)
-            # model.logger.record("eval/game_length", game_len)
-            # model.logger.dump(step=len(values))
-            value = 0.0
-            game_len = 0
-            obs, _ = env.reset()
-            env.render()
-    env.close()
+
+    # env = KickToGoalGym(seed=config["test_seed"])
+    # obs, _ = env.reset()
+    # env.render()
+    # values = list()
+    # value = 0.0
+    # game_len = 0
+    # while True:
+    #     # By default, deterministic=False, so we use the stochastic policy
+    #     action, _states = model.predict(obs, deterministic=True)
+    #     obs, rewards, dones, _, infors = env.step(action)
+    #     env.render()
+    #     value += rewards
+    #     game_len += 1
+    #     time.sleep(1.0 / 30 / 100)
+    #     if dones:
+    #         print("len: {0:.4f}, value: {1:.4f}, goal: {2}".format(game_len, value, infors["goal"]))
+    #         # model.logger.record("eval/value", value)
+    #         # model.logger.record("eval/game_length", game_len)
+    #         # model.logger.dump(step=len(values))
+    #         value = 0.0
+    #         game_len = 0
+    #         obs, _ = env.reset()
+    #         env.render()
+    # env.close()
 
