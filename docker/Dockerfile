@@ -1,0 +1,1 @@
+FROM amd64/python:3.9.20-bookworm
