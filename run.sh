@@ -2,9 +2,9 @@
 
 unzip py39.zip
 cd kick2goal
-#../py39/bin/python -m pip install -r requirements.txt
-#../py39/bin/python -m pip install cmake
-#../py39/bin/python -m pip install stable-baselines3[extra]
+../py39/bin/python -m pip install -r requirements.txt --no-cache-dir
+#../py39/bin/python -m pip install cmake --no-cache-dir
+../py39/bin/python -m pip install stable-baselines3[extra] --no-cache-dir
 mkdir models
 
 # various commands needed to run your job
