@@ -1,5 +1,6 @@
 #! /bin/bash
 
+unzip miniconda3.zip
 cd kick2goal
 ../miniconda3/bin/conda create -y -n py39 python=3.9
 ../miniconda3/envs/py39/python -m pip install -r requirements.txt
