@@ -38,7 +38,7 @@ class KickToGoalGym(gym.Env):
             "looking_at_ball": 0.001,
             "kick": 1,
             "missed_kick": -1,
-            "goal": 1000
+            "goal": 100
         }
 
         # self.reward_dict = {
