@@ -1,8 +1,9 @@
-FROM python:3.9.20-bookworm
+FROM python:3.9.20
 
-RUN apt-get update && apt-get install -y cmake
 RUN git clone https://github.com/josephzhong/kick2goal.git
+RUN pip3 install --upgrade pip
 RUN cd kick2goal \
-    && python3 -m pip install -r requirements.txt
-RUN python3 -m pip install "stable-baselines3[extra]"
-RUN mkdir models
+    && pip3 install -r requirements.txt \
+    && mkdir models
+RUN apt-get update && apt-get install -y cmake
+RUN pip3 install stable-baselines3[extra]
