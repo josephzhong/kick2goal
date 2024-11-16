@@ -9,7 +9,9 @@ miniconda3/bin/conda activate py39
 pip install -r requirements.txt
 apt-get update && apt-get install -y cmake
 pip install stable-baselines3[extra]
+mkdir models
 
 # various commands needed to run your job
 python test_ppo.py $1 $2
 mv tb_log/PPO_1/* ./
+mv models/* ./
