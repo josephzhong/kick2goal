@@ -1,5 +1,5 @@
 arguments = $(train_seed) $(test_seed)
-executable = shared/kick2goal/run.sh
+executable = kick2goal/run.sh
 
 
 log = job_$(train_seed).log
@@ -9,10 +9,10 @@ output = job_$(train_seed).out
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 
-transfer_input_files = shared/
+transfer_input_files = kick2goal/
 
 request_cpus = 9
 request_memory = 16GB
 request_disk = 1GB
 
-queue train_seed,test_seed from shared/kick2goal/seeds.txt
+queue train_seed,test_seed from kick2goal/seeds.txt
