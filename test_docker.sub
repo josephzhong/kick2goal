@@ -2,7 +2,7 @@ container_image = docker://joszhong/kick2goal:init
 universe = container
 
 arguments = $(train_seed) $(test_seed)
-executable = run.sh
+executable = run_docker.sh
 
 
 log = job_$(train_seed).log
