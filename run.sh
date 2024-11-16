@@ -1,6 +1,9 @@
 #! /bin/bash
 
+apt install python3.9-venv
 python -m venv py39
+pwd
+ls -a -l
 ./py39/bin/python -m pip install -r requirements.txt
 ./py39/bin/python -m pip install stable-baselines3[extra]
 mkdir models
