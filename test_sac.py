@@ -33,7 +33,7 @@ if __name__ == "__main__":
     config = {
         "model": SAC,
         "policy": SACPolicyForVisualize,
-        "device": "mps",
+        "device": "cpu",
         "total_timesteps": 3000000,
         "batch_size": 512,
         "train_num_envs": 8,
