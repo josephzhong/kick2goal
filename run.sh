@@ -8,6 +8,6 @@ cd kick2goal
 mkdir models
 
 # various commands needed to run your job
-../py39/bin/python $1 $2 $3
-mv tb_log/*_1/* ../$2_$3.events
+../py39/bin/python $1 $2 $3 $4
+mv tb_log/*_1/* ../$2_$4.events
 mv models/* ../
