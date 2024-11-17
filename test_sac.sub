@@ -2,9 +2,9 @@ arguments = test_sac.py $(train_seed) $(test_seed) $(maturity_threshold)
 executable = shared/kick2goal/run.sh
 
 
-log = job_$(train_seed).log
-error = job_$(train_seed).err
-output = job_$(train_seed).out
+log = job_$(train_seed)_$(maturity_threshold).log
+error = job_$(train_seed)_$(maturity_threshold).err
+output = job_$(train_seed)_$(maturity_threshold).out
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
