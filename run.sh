@@ -9,5 +9,5 @@ mkdir models
 
 # various commands needed to run your job
 ../py39/bin/python $1 $2 $3
-mv tb_log/*_1/* ../$2.events
+mv tb_log/*_1/* ../$2_$3.events
 mv models/* ../

@@ -25,11 +25,11 @@ from metrics import interquartile_mean
 
 
 if __name__ == "__main__":
-    if len(sys.argv) >= 3:
-        train_seed, test_seed = int(sys.argv[1]), int(sys.argv[2])
+    if len(sys.argv) >= 4:
+        train_seed, test_seed, maturity_threshold = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
         print("load seeds from args")
     else:
-        train_seed, test_seed = 53705, 50735
+        train_seed, test_seed, maturity_threshold = 53705, 50735, 50
         print("load seeds from default")
     config = {
         "model": PPO,
@@ -44,10 +44,10 @@ if __name__ == "__main__":
         "test_seed": test_seed,
         "policy_kwargs": {
             "activation_fn": torch.nn.ReLU,
-            "policy_cbp": False,
-            "value_cbp": False,
+            "policy_cbp": True,
+            "value_cbp": True,
             "replacement_rate": 10e-4,
-            "maturity_threshold": 50,
+            "maturity_threshold": maturity_threshold,
             "init": "default"
         }
     }
@@ -69,7 +69,7 @@ if __name__ == "__main__":
                     progress_bar=True)
         time_stamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         # save_path = f"models/kick_2_goal_{config['model'].__name__}_{time_stamp}.pt"
-        save_path = f"models/{str(train_seed)}.pt"
+        save_path = f"models/{str(train_seed)}_{str(maturity_threshold)}.pt"
         model.save(save_path)
         print("saved models to path {0}".format(save_path))
 

@@ -24,11 +24,11 @@ import torch
 
 
 if __name__ == "__main__":
-    if len(sys.argv) >= 3:
-        train_seed, test_seed = int(sys.argv[1]), int(sys.argv[2])
+    if len(sys.argv) >= 4:
+        train_seed, test_seed, maturity_threshold = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
         print("load seeds from args")
     else:
-        train_seed, test_seed = 53705, 50735
+        train_seed, test_seed, maturity_threshold = 53705, 50735, 50
         print("load seeds from default")
     config = {
         "model": SAC,
@@ -45,7 +45,7 @@ if __name__ == "__main__":
             "policy_cbp": True,
             "value_cbp": False,
             "replacement_rate": 10e-4,
-            "maturity_threshold": 100,
+            "maturity_threshold": maturity_threshold,
             "init": "default"
         }
     }
