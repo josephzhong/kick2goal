@@ -67,7 +67,7 @@ if __name__ == "__main__":
                     progress_bar=True)
         time_stamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         # save_path = f"models/kick_2_goal_{config['model'].__name__}_{time_stamp}.pt"
-        save_path = f"models/{str(train_seed)}.pt"
+        save_path = f"models/{str(train_seed)}_{str(maturity_threshold)}.pt"
         model.save(save_path)
         print("saved models to path {0}".format(save_path))
 
