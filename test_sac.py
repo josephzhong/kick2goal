@@ -34,7 +34,7 @@ if __name__ == "__main__":
         "model": SAC,
         "policy": SACPolicyForVisualize,
         "device": "cpu",
-        "total_timesteps": 3000000,
+        "total_timesteps": 10000000,
         "batch_size": 512,
         "train_num_envs": 8,
         "train_seed": train_seed,
