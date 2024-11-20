@@ -3,6 +3,8 @@ import copy
 import functools
 import time
 from typing import Dict, List, Optional, Tuple, TypeVar, Union, cast
+
+from numpy.f2py.auxfuncs import throw_error
 from overrides import overrides
 from pettingzoo import ParallelEnv
 from pettingzoo.utils.env import AgentID, ObsType, ActionType
@@ -27,9 +29,10 @@ class KickToGoalGym(gym.Env):
         "render_fps": 30,
     }
 
-    def __init__(self, render_mode="rgb_array", seed=None, episode_length=1000):
+    def __init__(self, render_mode="rgb_array", seed=None, episode_length=1000, goal_reward=100):
         self.rendering_init = False
         self.render_mode = render_mode
+        self.seed = seed
         self.rng = np.random.default_rng(seed=seed)
 
         self.reward_dict = {
@@ -38,7 +41,7 @@ class KickToGoalGym(gym.Env):
             "looking_at_ball": 0.001,
             "kick": 1,
             "missed_kick": -1,
-            "goal": 100
+            "goal": goal_reward
         }
 
         # self.reward_dict = {
@@ -110,8 +113,14 @@ class KickToGoalGym(gym.Env):
         return self.action_space
 
     def reset_seed(self, seed):
+        self.seed = seed
         self.rng = np.random.default_rng(seed=seed)
         self.reset()
+
+    def update_attribute(self, attribute_name, value):
+        assert hasattr(self, attribute_name)
+        setattr(self, attribute_name, value)
+        print(f"env attribute {attribute_name} changed to {value}")
 
     def get_distance(self, pos1: List[float], pos2: List[float]) -> float:
         return np.linalg.norm(np.array(pos1[:2]) - np.array(pos2[:2]))
@@ -297,11 +306,14 @@ class KickToGoalGym(gym.Env):
             self.get_distance(self.prev_ball, [4800, 0])
             - self.get_distance(self.ball, [4800, 0])
         )
-
         # Ball to goal - Team
         if self.goal():
             self.terminated_dict["goal_scored"] = True
             reward += self.reward_dict["goal"]
+
+            # if random.random() < 0.1:
+            # print(self.reward_dict)
+            # print(reward)
         # add out of boundary penalty
         # else:
         #     if self.terminated_dict["out_of_bounds"]:

@@ -1,5 +1,6 @@
 import os
 import sys
+
 from stable_baselines3.common.policies import ActorCriticPolicy
 
 from visualize import LogWeight, ActorCriticPolicyForVisualize
@@ -8,7 +9,7 @@ os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 from stable_baselines3 import PPO, DQN, SAC
 from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
+from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, EventCallback, BaseCallback
 import numpy as np
 import torch
 
@@ -17,20 +18,46 @@ import datetime
 from tempfile import gettempdir
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.utils import get_linear_fn
-from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3.common.vec_env import SubprocVecEnv, unwrap_vec_normalize
 from evaluate import evaluate_policy
 
 from envs.kick_to_goal_gym import KickToGoalGym
 from metrics import interquartile_mean
 
+class EveryNTimesteps(EventCallback):
+    """
+    Trigger a callback every ``n_steps`` timesteps
+
+    :param n_steps: Number of timesteps between two trigger.
+    :param callback: Callback that will be called
+        when the event is triggered.
+    """
+
+    def __init__(self, n_steps: int, callback: BaseCallback):
+        super().__init__(callback)
+        self.n_steps = n_steps
+        self.last_time_trigger = 0
+
+    def _on_step(self) -> bool:
+        if (self.num_timesteps - self.last_time_trigger) >= self.n_steps:
+            self.last_time_trigger = self.num_timesteps
+            for env_idx in range(self.model.env.num_envs):
+                self.model.env.env_method("update_attribute", attribute_name="episode_length",
+                                          value=self.model.env.get_attr("episode_length", indices=env_idx)[0] + 1000, indices=env_idx)
+            return self._on_event()
+        return True
 
 if __name__ == "__main__":
-    if len(sys.argv) >= 4:
-        train_seed, test_seed, maturity_threshold = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
+    if len(sys.argv) >= 3:
+        train_seed, test_seed = int(sys.argv[1]), int(sys.argv[2])
         print("load seeds from args")
     else:
-        train_seed, test_seed, maturity_threshold = 53705, 50735, 50
+        train_seed, test_seed = 53705, 50735
         print("load seeds from default")
+    if len(sys.argv) >= 4:
+        maturity_threshold = int(sys.argv[3])
+    else:
+        maturity_threshold = 50
     config = {
         "model": PPO,
         "policy": ActorCriticPolicyForVisualize,
@@ -64,8 +91,9 @@ if __name__ == "__main__":
         model = config["model"](policy=config["policy"], env=train_envs, batch_size=batch_size, n_steps=n_step,
                                 tensorboard_log="tb_log", vf_coef=0.05, ent_coef=0.01, device=config["device"],
                                 seed=config["train_seed"], policy_kwargs=config["policy_kwargs"])
+        callback = EveryNTimesteps(n_steps=1000000, callback=None)
         model.learn(total_timesteps=config["total_timesteps"],
-                    callback=model.policy.callback,
+                    callback=[model.policy.callback, callback],
                     progress_bar=True)
         time_stamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         # save_path = f"models/kick_2_goal_{config['model'].__name__}_{time_stamp}.pt"
