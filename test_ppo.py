@@ -63,7 +63,7 @@ if __name__ == "__main__":
         "policy": ActorCriticPolicyForVisualize,
         # "policy": ActorCriticPolicy,
         "device": "cpu",
-        "total_timesteps": 10000000,
+        "total_timesteps": 3000000,
         "batch_size": 512,
         "n_steps": 1024,
         "train_num_envs": 8,
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         model = config["model"](policy=config["policy"], env=train_envs, batch_size=batch_size, n_steps=n_step,
                                 tensorboard_log="tb_log", vf_coef=0.05, ent_coef=0.01, device=config["device"],
                                 seed=config["train_seed"], policy_kwargs=config["policy_kwargs"])
-        callback = EveryNTimesteps(n_steps=1000000, callback=None)
+        callback = EveryNTimesteps(n_steps=300000, callback=None)
         model.learn(total_timesteps=config["total_timesteps"],
                     callback=[model.policy.callback, callback],
                     progress_bar=True)

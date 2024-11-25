@@ -61,7 +61,7 @@ if __name__ == "__main__":
         "model": SAC,
         "policy": SACPolicyForVisualize,
         "device": "cpu",
-        "total_timesteps": 10000000,
+        "total_timesteps": 3000000,
         "batch_size": 512,
         "train_num_envs": 8,
         "train_seed": train_seed,
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         model = config["model"](policy=config["policy"], env=train_envs, batch_size=batch_size,
                                 tensorboard_log="tb_log", device=config["device"],
                                 seed=config["train_seed"], policy_kwargs=config["policy_kwargs"])
-        callback = EveryNTimesteps(n_steps=1000000, callback=None)
+        callback = EveryNTimesteps(n_steps=300000, callback=None)
         model.learn(total_timesteps=config["total_timesteps"],
                     callback=[model.policy.callback, callback],
                     progress_bar=True)
