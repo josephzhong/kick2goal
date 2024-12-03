@@ -42,8 +42,14 @@ class EveryNTimesteps(EventCallback):
         if (self.num_timesteps - self.last_time_trigger) >= self.n_steps:
             self.last_time_trigger = self.num_timesteps
             for env_idx in range(self.model.env.num_envs):
-                self.model.env.env_method("update_attribute", attribute_name="episode_length",
-                                          value=self.model.env.get_attr("episode_length", indices=env_idx)[0] + 1000, indices=env_idx)
+                # self.model.env.env_method("update_attribute", attribute_name="episode_length",
+                #                           value=self.model.env.get_attr("episode_length", indices=env_idx)[0] + 1000, indices=env_idx)
+
+                reward_dict = self.model.env.get_attr("reward_dict", indices=env_idx)[0]
+                reward_dict["goal"] += 100
+                self.model.env.env_method("update_attribute", attribute_name="reward_dict",
+                                          value=reward_dict,
+                                          indices=env_idx)
             return self._on_event()
         return True
 
