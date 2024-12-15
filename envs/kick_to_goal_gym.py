@@ -29,14 +29,14 @@ class KickToGoalGym(gym.Env):
         "render_fps": 30,
     }
 
-    def __init__(self, render_mode="rgb_array", seed=None, episode_length=1000, goal_reward=1000, test=False):
+    def __init__(self, render_mode="rgb_array", seed=None, episode_length=1000, goal_reward=1000, varying_init_state=False):
         self.rendering_init = False
         self.render_mode = render_mode
         self.seed = seed
         self.rng = np.random.default_rng(seed=seed)
-        self.test = test
-        if self.test:
-            print("test mode.")
+        self.varying_init_state = varying_init_state
+        if self.varying_init_state:
+            print("varying_init_state mode.")
 
         self.reward_dict = {
             "ball_to_goal": 0.1,
@@ -234,9 +234,7 @@ class KickToGoalGym(gym.Env):
             0: [self.rng.uniform(-4000, 4000), self.rng.uniform(-3000, 3000), 0],
         }
         # Joseph
-        if self.test:
-            self.ball: List[float] = [self.rng.uniform(-4000, 4000), self.rng.uniform(-3000, 3000), 0, 0]
-        else:
+        if self.varying_init_state:
             angle_mean = np.pi / 2 * self.init_ball_to_goal_angle_score
             angle_std_dev = np.pi / 2 / 10
             angle = np.min((np.max((self.rng.normal(angle_mean, angle_std_dev), 0.0)),
@@ -259,6 +257,8 @@ class KickToGoalGym(gym.Env):
             ball_x = self.Field_length / 2 - distance * np.cos(angle)
             ball_y = self.rng.choice([1, -1]) * distance * np.sin(angle)
             self.ball: List[float] = [ball_x, ball_y, 0, 0]
+        else:
+            self.ball: List[float] = [self.rng.uniform(-4000, 4000), self.rng.uniform(-3000, 3000), 0, 0]
 
         self.robot_velocities = [[0, 0, 0] for _ in range(self.num_robots)]
 
