@@ -29,11 +29,14 @@ class KickToGoalGym(gym.Env):
         "render_fps": 30,
     }
 
-    def __init__(self, render_mode="rgb_array", seed=None, episode_length=1000, goal_reward=100):
+    def __init__(self, render_mode="rgb_array", seed=None, episode_length=1000, goal_reward=1000, test=False):
         self.rendering_init = False
         self.render_mode = render_mode
         self.seed = seed
         self.rng = np.random.default_rng(seed=seed)
+        self.test = test
+        if self.test:
+            print("test mode.")
 
         self.reward_dict = {
             "ball_to_goal": 0.1,
@@ -82,6 +85,29 @@ class KickToGoalGym(gym.Env):
         self.defenders = []
         self.defender_info = []
 
+        self.Field_length = 9000
+        self.Field_width = 6000
+        self.Line_width = 50
+        self.Penalty_mark_size = 100
+        self.Goal_area_length = 600
+        self.Goal_area_width = 2200
+        self.Penalty_area_length = 1650
+        self.Penalty_area_width = 4000
+        self.Penalty_mark_distance = 1300
+        self.Center_circle_diameter = 1500
+        self.Border_strip_width = 700
+        self.Goal_tight_width = 600
+        self.Goal_area_y_position_delta_max = self.Field_width / 2 - self.Goal_tight_width / 2 - self.Line_width / 2
+        self.Goal_area_y_position_delta_min = -1 * self.Goal_area_y_position_delta_max
+
+        self.goal_area_y_position_delta = 0
+
+        self.init_ball_to_goal_angle_score = 0.1
+        self.init_ball_to_goal_distance_score = 0.1
+        self.min_init_distance_to_goal = 200
+
+
+
         # agents
         self.num_robots = 1
 
@@ -122,6 +148,10 @@ class KickToGoalGym(gym.Env):
         setattr(self, attribute_name, value)
         print(f"env attribute {attribute_name} changed to {value}")
 
+    def change_goal_position(self, new_delta):
+        self.goal_area_y_position_delta = new_delta
+        print(f"New goal y position delta:{self.goal_area_y_position_delta}")
+
     def get_distance(self, pos1: List[float], pos2: List[float]) -> float:
         return np.linalg.norm(np.array(pos1[:2]) - np.array(pos2[:2]))
 
@@ -155,11 +185,12 @@ class KickToGoalGym(gym.Env):
         obs.extend(ball)
 
         # Goal
-        goal = self.get_relative_observation(robot_loc, [4800, 0])
+        # Joseph
+        goal = self.get_relative_observation(robot_loc, [4800, self.goal_area_y_position_delta])
         obs.extend(goal)
 
         # Opponent goal
-        opp_goal = self.get_relative_observation(robot_loc, [-4800, 0])
+        opp_goal = self.get_relative_observation(robot_loc, [-4800, self.goal_area_y_position_delta])
         obs.extend(opp_goal)
 
         if include_history:
@@ -202,7 +233,32 @@ class KickToGoalGym(gym.Env):
         self.robots: Dict[AgentID, List[float]] = {
             0: [self.rng.uniform(-4000, 4000), self.rng.uniform(-3000, 3000), 0],
         }
-        self.ball: List[float] = [self.rng.uniform(-4000, 4000), self.rng.uniform(-3000, 3000), 0, 0]
+        # Joseph
+        if self.test:
+            self.ball: List[float] = [self.rng.uniform(-4000, 4000), self.rng.uniform(-3000, 3000), 0, 0]
+        else:
+            angle_mean = np.pi / 2 * self.init_ball_to_goal_angle_score
+            angle_std_dev = np.pi / 2 / 10
+            angle = np.min((np.max((self.rng.normal(angle_mean, angle_std_dev), 0.0)),
+                            np.pi / 2))
+            if angle <= np.arctan((self.Field_width / 2) / self.Field_length):
+                distance_std_dev = (self.Field_length - self.min_init_distance_to_goal) / np.cos(angle) / 10
+                distance_mean = ((self.Field_length - self.min_init_distance_to_goal) / np.cos(
+                    angle) - self.min_init_distance_to_goal) * self.init_ball_to_goal_distance_score
+                distance = np.min((np.max((self.rng.normal(distance_mean, distance_std_dev), 0)),
+                                   (self.Field_length - self.min_init_distance_to_goal) / np.cos(angle)))
+            else:
+                distance_mean = ((self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(
+                    angle) - self.min_init_distance_to_goal) * self.init_ball_to_goal_distance_score
+                distance_std_dev = (self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(angle) / 10
+                distance = np.min((np.max((self.rng.normal(distance_mean, distance_std_dev), 0)),
+                                   (self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(angle)))
+            # print(
+            #     f"angle_mean: {angle_mean}, angle_std: {angle_std_dev}, distance_mean: {distance_mean}, distance_std: {distance_std_dev}")
+            # print(f"angle: {angle},distance: {distance}")
+            ball_x = self.Field_length / 2 - distance * np.cos(angle)
+            ball_y = self.rng.choice([1, -1]) * distance * np.sin(angle)
+            self.ball: List[float] = [ball_x, ball_y, 0, 0]
 
         self.robot_velocities = [[0, 0, 0] for _ in range(self.num_robots)]
 
@@ -277,7 +333,10 @@ class KickToGoalGym(gym.Env):
 
     def goal(self) -> bool:
         # Note: This is tighter than the actual goal for transfer performance
-        if self.ball[0] > 4500 and self.ball[1] < 300 and self.ball[1] > -300:
+        if (self.ball[0] > self.Field_length / 2
+                and self.ball[1] < self.Goal_tight_width / 2 + self.goal_area_y_position_delta
+                and self.ball[1] > -1 * self.Goal_tight_width / 2 + self.goal_area_y_position_delta):
+        # if self.ball[0] > 4500 and self.ball[1] < 300 and self.ball[1] > -300:
             return True
         return False
 
@@ -303,13 +362,14 @@ class KickToGoalGym(gym.Env):
 
         # Ball to goal - Team
         reward += self.reward_dict["ball_to_goal"] * (
-            self.get_distance(self.prev_ball, [4800, 0])
-            - self.get_distance(self.ball, [4800, 0])
+            self.get_distance(self.prev_ball, [4800, self.goal_area_y_position_delta])
+            - self.get_distance(self.ball, [4800, self.goal_area_y_position_delta])
         )
         # Ball to goal - Team
         if self.goal():
             self.terminated_dict["goal_scored"] = True
             reward += self.reward_dict["goal"]
+            # print(self.reward_dict["goal"])
 
             # if random.random() < 0.1:
             # print(self.reward_dict)
@@ -695,57 +755,46 @@ class KickToGoalGym(gym.Env):
         # Total render width should be Border_strip_width * 2 + Field_width
 
         # Field dimensions
-        Field_length = 9000
-        Field_width = 6000
-        Line_width = 50
-        Penalty_mark_size = 100
-        Goal_area_length = 600
-        Goal_area_width = 2200
-        Penalty_area_length = 1650
-        Penalty_area_width = 4000
-        Penalty_mark_distance = 1300
-        Center_circle_diameter = 1500
-        Border_strip_width = 700
 
         # Create render dimensions
         Field_length_render = (
-            Field_length * render_length / (Field_length + 2 * Border_strip_width)
+            self.Field_length * render_length / (self.Field_length + 2 * self.Border_strip_width)
         )
         Field_width_render = (
-            Field_width * render_length / (Field_length + 2 * Border_strip_width)
+            self.Field_width * render_length / (self.Field_length + 2 * self.Border_strip_width)
         )
         Line_width_render = int(
-            Line_width * render_length / (Field_length + 2 * Border_strip_width)
+            self.Line_width * render_length / (self.Field_length + 2 * self.Border_strip_width)
         )
         Penalty_mark_size_render = (
-            Penalty_mark_size * render_length / (Field_length + 2 * Border_strip_width)
+            self.Penalty_mark_size * render_length / (self.Field_length + 2 * self.Border_strip_width)
         )
         Goal_area_length_render = (
-            Goal_area_length * render_length / (Field_length + 2 * Border_strip_width)
+            self.Goal_area_length * render_length / (self.Field_length + 2 * self.Border_strip_width)
         )
         Goal_area_width_render = (
-            Goal_area_width * render_length / (Field_length + 2 * Border_strip_width)
+            self.Goal_area_width * render_length / (self.Field_length + 2 * self.Border_strip_width)
         )
         Penalty_area_length_render = (
-            Penalty_area_length
+            self.Penalty_area_length
             * render_length
-            / (Field_length + 2 * Border_strip_width)
+            / (self.Field_length + 2 * self.Border_strip_width)
         )
         Penalty_area_width_render = (
-            Penalty_area_width * render_length / (Field_length + 2 * Border_strip_width)
+            self.Penalty_area_width * render_length / (self.Field_length + 2 * self.Border_strip_width)
         )
         Penalty_mark_distance_render = (
-            Penalty_mark_distance
+            self.Penalty_mark_distance
             * render_length
-            / (Field_length + 2 * Border_strip_width)
+            / (self.Field_length + 2 * self.Border_strip_width)
         )
         Center_circle_diameter_render = (
-            Center_circle_diameter
+            self.Center_circle_diameter
             * render_length
-            / (Field_length + 2 * Border_strip_width)
+            / (self.Field_length + 2 * self.Border_strip_width)
         )
         Border_strip_width_render = int(
-            Border_strip_width * render_length / (Field_length + 2 * Border_strip_width)
+            self.Border_strip_width * render_length / (self.Field_length + 2 * self.Border_strip_width)
         )
         Surface_width = int(Field_length_render + 2 * Border_strip_width_render)
         Surface_height = (
@@ -1024,7 +1073,7 @@ class KickToGoalGym(gym.Env):
         pygame.draw.rect(
             self.field,
             pygame.Color(255, 153, 153),
-            (
+            pygame.Rect(
                 Border_strip_width_render - Goal_area_length_render,
                 Surface_height / 2 - Goal_area_width_render / 2 - Line_width_render / 2,
                 Goal_area_length_render,
@@ -1062,16 +1111,19 @@ class KickToGoalGym(gym.Env):
         #     ),
         # )
         # tight condition for goal
-        tight_width = 600
+        #
         Goal_area_width_render = (
-                tight_width * render_length / (Field_length + 2 * Border_strip_width)
+                self.Goal_tight_width * render_length / (self.Field_length + 2 * self.Border_strip_width)
         )
+        goal_area_y_position_delta_render = self.goal_area_y_position_delta * render_length / (self.Field_length + 2 * self.Border_strip_width)
+        # print(f"old y positon:{Surface_height / 2 - Goal_area_width_render / 2 - Line_width_render / 2}")
+        # print(f"new y position:{Surface_height / 2 - Goal_area_width_render / 2 - Line_width_render / 2 + goal_area_y_position_delta_render}")
         pygame.draw.rect(
             self.field,
             pygame.Color(153, 204, 255),
             (
                 Surface_width - Border_strip_width_render,
-                Surface_height / 2 - Goal_area_width_render / 2 - Line_width_render / 2,
+                Surface_height / 2 - Goal_area_width_render / 2 - Line_width_render / 2 + int(goal_area_y_position_delta_render),
                 Goal_area_length_render,
                 Goal_area_width_render,
             ),
