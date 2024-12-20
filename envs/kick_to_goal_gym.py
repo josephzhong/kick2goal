@@ -29,7 +29,7 @@ class KickToGoalGym(gym.Env):
         "render_fps": 30,
     }
 
-    def __init__(self, render_mode="rgb_array", seed=None, episode_length=1000, goal_reward=1000, varying_init_state=False):
+    def __init__(self, render_mode="rgb_array", seed=None, episode_length=1000, goal_reward=100, varying_init_state=False):
         self.rendering_init = False
         self.render_mode = render_mode
         self.seed = seed
@@ -185,13 +185,18 @@ class KickToGoalGym(gym.Env):
         obs.extend(ball)
 
         # Goal
-        # Joseph
-        goal = self.get_relative_observation(robot_loc, [4800, self.goal_area_y_position_delta])
+        # Joseph change goal anchor point from 4800 to 4500
+        goal = self.get_relative_observation(robot_loc, [4550, self.goal_area_y_position_delta])
         obs.extend(goal)
 
         # Opponent goal
-        opp_goal = self.get_relative_observation(robot_loc, [-4800, self.goal_area_y_position_delta])
+        # Joseph change goal anchor point from 4800 to 4500
+        opp_goal = self.get_relative_observation(robot_loc, [-4550, self.goal_area_y_position_delta])
         obs.extend(opp_goal)
+
+        # ball distance to boundary
+        # Joseph
+        obs.extend([(self.ball[0] - (-4500)) / 4500, (self.ball[1] - (-3000)) / 3000, (4500 - self.ball[0]) / 4500, (3000 - self.ball[1]) / 3000])
 
         if include_history:
             for prev_obs in self.obs_history[robot].get():

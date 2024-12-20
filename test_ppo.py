@@ -54,9 +54,9 @@ class EveryNTimesteps(EventCallback):
             #     self.model.env.get_attr("goal_area_y_position_delta", indices=0)[0]
             # new_delta = goal_area_y_position_delta + delta_delta
             for env_idx in range(self.model.env.num_envs):
-                # pass
-                # self.model.env.env_method("update_attribute", attribute_name="episode_length",
-                #                           value=self.model.env.get_attr("episode_length", indices=env_idx)[0] + 1000, indices=env_idx)
+                pass
+                self.model.env.env_method("update_attribute", attribute_name="episode_length",
+                                          value=self.model.env.get_attr("episode_length", indices=env_idx)[0] + 1000, indices=env_idx)
 
                 # reward_dict = self.model.env.get_attr("reward_dict", indices=env_idx)[0]
                 # reward_dict["goal"] += 100
@@ -88,17 +88,19 @@ if __name__ == "__main__":
         "policy": ActorCriticPolicyForVisualize,
         # "policy": ActorCriticPolicy,
         "device": "cpu",
-        "total_timesteps": 3000000,
+        "total_timesteps": 10000000,
         "batch_size": 512,
         "n_steps": 1024,
         "train_num_envs": 8,
+        "eval_num_envs": 8,
         "train_seed": train_seed,
         "test_seed": test_seed,
-        "environment_change_timestep": 300000,
+        "num_of_eval_episodes": 1024,
+        "environment_change_timestep": 1010000,
         "policy_kwargs": {
             "activation_fn": torch.nn.ReLU,
-            "policy_cbp": True,
-            "value_cbp": True,
+            "policy_cbp": False,
+            "value_cbp": False,
             "replacement_rate": 1e-5,
             "maturity_threshold": maturity_threshold,
             "init": "default"
@@ -108,7 +110,7 @@ if __name__ == "__main__":
 
     print("train")
     train_envs = make_vec_env(KickToGoalGym, n_envs=config["train_num_envs"], vec_env_cls=SubprocVecEnv,
-                              vec_env_kwargs={"start_method": "fork"}, env_kwargs={"seed": config["train_seed"], "varying_init_state": True})
+                              vec_env_kwargs={"start_method": "fork"}, env_kwargs={"seed": config["train_seed"], "varying_init_state": True, "goal_reward": 1000})
     for env_idx in range(train_envs.num_envs):
         # train_envs.unwrapped.reset_seed(seed=config["train_seed"] + env_idx)
         train_envs.env_method("reset_seed", seed=config["train_seed"] + env_idx, indices=env_idx)
@@ -133,52 +135,59 @@ if __name__ == "__main__":
         print("saved models to path {0}".format(save_path))
 
     print("test")
-    eval_env = make_vec_env(KickToGoalGym, n_envs=8, vec_env_cls=SubprocVecEnv, vec_env_kwargs={"start_method": "fork"},
-                            env_kwargs={"episode_length": 10000})
+    eval_env = make_vec_env(KickToGoalGym, n_envs=config["eval_num_envs"], vec_env_cls=SubprocVecEnv, vec_env_kwargs={"start_method": "fork"},
+                            env_kwargs={"episode_length": 10000, "goal_reward": 1000})
     for env_idx in range(eval_env.num_envs):
         eval_env.env_method("reset_seed", seed=config["test_seed"] + env_idx, indices=env_idx)
         # new_delta = callback.last_delta
         # eval_env.env_method("change_goal_position", new_delta=new_delta, indices=env_idx)
 
-    # model = config["model"].load("models/kick_2_goal_PPO_20241020232922.pt", seed=config["test_seed"], device=config["device"])
+    # model = config["model"].load("models/53705_50.pt", seed=config["test_seed"], device=config["device"])
     # print("model loaded.")
     # models.exploration_final_eps = 0.01
-    rews, lengths, infors = evaluate_policy(model, eval_env, n_eval_episodes=1024, return_episode_rewards=True,
+    rews, lengths, infors = evaluate_policy(model, eval_env, n_eval_episodes=config["num_of_eval_episodes"], return_episode_rewards=True,
                                             infor_keys=["goal"], deterministic=True)
+    print(f"Number of eval episodes {len(rews)}")
     print(f"IQM of rewards {interquartile_mean(rews):.4f}")
     print(f"Mean of rewards {np.mean(rews):.4f}")
     print(f"Std of rewards {np.std(rews):.4f}")
     print(f"IQM of game_lens {interquartile_mean(lengths):.4f}")
     print(f"goal ratio {np.mean(infors['goal']):.4f}")
+    with open(f"{config['test_seed']}_{config['policy_kwargs']['maturity_threshold']}.rewards", "w") as f:
+        f.write(",".join(
+            [f"{rew:.2f}" for rew in rews]
+        ))
 
     # render
-    # env = KickToGoalGym(seed=config["test_seed"])
-    # # new_delta = callback.last_delta
-    # # env.goal_area_y_position_delta = new_delta
-    # obs, _ = env.reset()
-    # env.render()
-    # values = list()
-    # value = 0.0
-    # game_len = 0
-    # while True:
-    #     # By default, deterministic=False, so we use the stochastic policy
-    #     action, _states = model.predict(obs, deterministic=True)
-    #     obs, rewards, dones, _, infors = env.step(action)
-    #     env.render()
-    #     value += rewards
-    #     game_len += 1
-    #     time.sleep(1.0 / 30 / 100)
-    #     if dones:
-    #         print("len: {0:.4f}, value: {1:.4f}, goal: {2}".format(game_len, value, infors["goal"]))
-    #         # model.logger.record("eval/value", value)
-    #         # model.logger.record("eval/game_length", game_len)
-    #         # model.logger.dump(step=len(values))
-    #         value = 0.0
-    #         game_len = 0
-    #         # env.change_goal_position()
-    #         # if np.random.rand() < 0.2:
-    #             # env.update_attribute("init_ball_to_goal_angle_score", env.init_ball_to_goal_angle_score + 0.1)
-    #             # env.update_attribute("init_ball_to_goal_distance_score", env.init_ball_to_goal_distance_score + 0.1)
-    #         obs, _ = env.reset()
-    #         env.render()
-    # env.close()
+    env = KickToGoalGym(seed=config["test_seed"], varying_init_state=True, episode_length=10000, goal_reward=1000)
+    env.init_ball_to_goal_angle_score+=0.8
+    env.init_ball_to_goal_distance_score += 0.8
+    # new_delta = callback.last_delta
+    # env.goal_area_y_position_delta = new_delta
+    obs, _ = env.reset()
+    env.render()
+    values = list()
+    value = 0.0
+    game_len = 0
+    while True:
+        # By default, deterministic=False, so we use the stochastic policy
+        action, _states = model.predict(obs, deterministic=True)
+        obs, rewards, dones, _, infors = env.step(action)
+        env.render()
+        value += rewards
+        game_len += 1
+        time.sleep(1.0 / 30 / 100)
+        if dones:
+            print("len: {0:.4f}, value: {1:.4f}, goal: {2}".format(game_len, value, infors["goal"]))
+            # model.logger.record("eval/value", value)
+            # model.logger.record("eval/game_length", game_len)
+            # model.logger.dump(step=len(values))
+            value = 0.0
+            game_len = 0
+            # env.change_goal_position()
+            # if np.random.rand() < 0.2:
+                # env.update_attribute("init_ball_to_goal_angle_score", env.init_ball_to_goal_angle_score + 0.1)
+                # env.update_attribute("init_ball_to_goal_distance_score", env.init_ball_to_goal_distance_score + 0.1)
+            obs, _ = env.reset()
+            env.render()
+    env.close()
