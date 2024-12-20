@@ -54,9 +54,9 @@ class EveryNTimesteps(EventCallback):
             #     self.model.env.get_attr("goal_area_y_position_delta", indices=0)[0]
             # new_delta = goal_area_y_position_delta + delta_delta
             for env_idx in range(self.model.env.num_envs):
-                pass
-                # self.model.env.env_method("update_attribute", attribute_name="episode_length",
-                #                           value=self.model.env.get_attr("episode_length", indices=env_idx)[0] + 1000, indices=env_idx)
+                # pass
+                self.model.env.env_method("update_attribute", attribute_name="episode_length",
+                                          value=self.model.env.get_attr("episode_length", indices=env_idx)[0] + 1000, indices=env_idx)
 
                 # reward_dict = self.model.env.get_attr("reward_dict", indices=env_idx)[0]
                 # reward_dict["goal"] += 100
@@ -64,10 +64,10 @@ class EveryNTimesteps(EventCallback):
                 #                           value=reward_dict,
                 #                           indices=env_idx)
                 # self.model.env.env_method("change_goal_position", new_delta=new_delta, indices=env_idx)
-                # init_ball_to_goal_angle_score = self.model.env.get_attr("init_ball_to_goal_angle_score", indices=env_idx)[0]
-                # self.model.env.env_method("update_attribute", attribute_name="init_ball_to_goal_angle_score", value=init_ball_to_goal_angle_score + 0.1, indices=env_idx)
-                # init_ball_to_goal_distance_score = self.model.env.get_attr("init_ball_to_goal_distance_score", indices=env_idx)[0]
-                # self.model.env.env_method("update_attribute", attribute_name="init_ball_to_goal_distance_score", value=init_ball_to_goal_distance_score + 0.1, indices=env_idx)
+                init_ball_to_goal_angle_score = self.model.env.get_attr("init_ball_to_goal_angle_score", indices=env_idx)[0]
+                self.model.env.env_method("update_attribute", attribute_name="init_ball_to_goal_angle_score", value=init_ball_to_goal_angle_score + 0.1, indices=env_idx)
+                init_ball_to_goal_distance_score = self.model.env.get_attr("init_ball_to_goal_distance_score", indices=env_idx)[0]
+                self.model.env.env_method("update_attribute", attribute_name="init_ball_to_goal_distance_score", value=init_ball_to_goal_distance_score + 0.1, indices=env_idx)
             # self.last_delta = new_delta
             return self._on_event()
         return True
@@ -110,9 +110,7 @@ if __name__ == "__main__":
 
     print("train")
     train_envs = make_vec_env(KickToGoalGym, n_envs=config["train_num_envs"], vec_env_cls=SubprocVecEnv,
-                              vec_env_kwargs={"start_method": "fork"}, env_kwargs={"seed": config["train_seed"],
-                                                                                   # "varying_init_state": True,
-                                                                                   "goal_reward": 1000})
+                              vec_env_kwargs={"start_method": "fork"}, env_kwargs={"seed": config["train_seed"], "varying_init_state": True, "goal_reward": 1000})
     for env_idx in range(train_envs.num_envs):
         # train_envs.unwrapped.reset_seed(seed=config["train_seed"] + env_idx)
         train_envs.env_method("reset_seed", seed=config["train_seed"] + env_idx, indices=env_idx)
