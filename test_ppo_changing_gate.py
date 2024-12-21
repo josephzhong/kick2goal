@@ -107,7 +107,8 @@ if __name__ == "__main__":
 
     print("train")
     train_envs = make_vec_env(KickToGoalGym, n_envs=config["train_num_envs"], vec_env_cls=SubprocVecEnv,
-                              vec_env_kwargs={"start_method": "fork"}, env_kwargs={"seed": config["train_seed"]})
+                              vec_env_kwargs={"start_method": "fork"}, env_kwargs={"seed": config["train_seed"],
+                                                                                   "goal_reward": 1000})
     for env_idx in range(train_envs.num_envs):
         train_envs.env_method("reset_seed", seed=config["train_seed"] + env_idx, indices=env_idx)
         Goal_area_y_position_delta_min = \
@@ -132,7 +133,7 @@ if __name__ == "__main__":
 
     print("test")
     eval_env = make_vec_env(KickToGoalGym, n_envs=8, vec_env_cls=SubprocVecEnv, vec_env_kwargs={"start_method": "fork"},
-                            env_kwargs={"episode_length": 10000})
+                            env_kwargs={"episode_length": 10000, "goal_reward": 1000})
     for env_idx in range(eval_env.num_envs):
         eval_env.env_method("reset_seed", seed=config["test_seed"] + env_idx, indices=env_idx)
         new_delta = callback.last_delta

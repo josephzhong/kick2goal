@@ -11,3 +11,4 @@ mkdir models
 ../py39/bin/python $1 $2 $3 $4
 mv tb_log/*_1/* ../$2_$4.events
 mv models/* ../
+mv *.rewards ../
