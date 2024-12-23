@@ -88,7 +88,7 @@ if __name__ == "__main__":
         "policy": ActorCriticPolicyForVisualize,
         # "policy": ActorCriticPolicy,
         "device": "cpu",
-        "total_timesteps": 3000000,
+        "total_timesteps": 10000000,
         "batch_size": 512,
         "n_steps": 1024,
         "train_num_envs": 8,
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         "test_seed": test_seed,
         "validate_seed": validate_seed,
         "num_of_eval_episodes": 1024,
-        "environment_change_timestep": 310000,
+        "environment_change_timestep": 1010000,
         "policy_kwargs": {
             "activation_fn": torch.nn.ReLU,
             "policy_cbp": False,
