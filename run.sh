@@ -8,7 +8,7 @@ cd kick2goal
 mkdir models
 
 # various commands needed to run your job
-../py39/bin/python $1 $2 $3 $4
+../py39/bin/python $1 $2 $3 $4 $5
 mv tb_log/*_1/* ../$2_$4.events
 mv models/* ../
 mv *.rewards ../

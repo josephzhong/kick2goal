@@ -240,22 +240,30 @@ class KickToGoalGym(gym.Env):
         }
         # Joseph
         if self.varying_init_state:
-            angle_mean = np.pi / 2 * self.init_ball_to_goal_angle_score
-            angle_std_dev = np.pi / 2 / 10
-            angle = np.min((np.max((self.rng.normal(angle_mean, angle_std_dev), 0.0)),
-                            np.pi / 2))
+            # angle_mean = np.pi / 2 * self.init_ball_to_goal_angle_score
+            # angle_std_dev = np.pi / 2 / 10
+            # angle = np.min((np.max((self.rng.normal(angle_mean, angle_std_dev), 0.0)), np.pi / 2))
+            angle = self.rng.uniform(0, np.pi / 2)
             if angle <= np.arctan((self.Field_width / 2) / self.Field_length):
-                distance_std_dev = (self.Field_length - self.min_init_distance_to_goal) / np.cos(angle) / 10
-                distance_mean = ((self.Field_length - self.min_init_distance_to_goal) / np.cos(
-                    angle) - self.min_init_distance_to_goal) * self.init_ball_to_goal_distance_score
-                distance = np.min((np.max((self.rng.normal(distance_mean, distance_std_dev), 0)),
-                                   (self.Field_length - self.min_init_distance_to_goal) / np.cos(angle)))
+                # distance_std_dev = (self.Field_length - self.min_init_distance_to_goal) / np.cos(angle) / 10
+                # distance_mean = ((self.Field_length - self.min_init_distance_to_goal) / np.cos(
+                #     angle) - self.min_init_distance_to_goal) * self.init_ball_to_goal_distance_score
+                # distance = np.min((np.max((self.rng.normal(distance_mean, distance_std_dev), 0)),
+                #                    (self.Field_length - self.min_init_distance_to_goal) / np.cos(angle)))
+                distance_min = ((self.Field_length - self.min_init_distance_to_goal) / np.cos(
+                    angle)) * self.init_ball_to_goal_distance_score
+                distance_max = ((self.Field_length - self.min_init_distance_to_goal) / np.cos(
+                    angle)) * (self.init_ball_to_goal_distance_score + 0.1)
+                distance = self.rng.uniform(distance_min, distance_max)
             else:
-                distance_mean = ((self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(
-                    angle) - self.min_init_distance_to_goal) * self.init_ball_to_goal_distance_score
-                distance_std_dev = (self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(angle) / 10
-                distance = np.min((np.max((self.rng.normal(distance_mean, distance_std_dev), 0)),
-                                   (self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(angle)))
+                # distance_mean = ((self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(
+                #     angle) - self.min_init_distance_to_goal) * self.init_ball_to_goal_distance_score
+                # distance_std_dev = (self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(angle) / 10
+                # distance = np.min((np.max((self.rng.normal(distance_mean, distance_std_dev), 0)),
+                #                    (self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(angle)))
+                distance_min = ((self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(angle)) * self.init_ball_to_goal_distance_score
+                distance_max = ((self.Field_width / 2 - self.min_init_distance_to_goal) / np.sin(angle)) * (self.init_ball_to_goal_distance_score + 0.1)
+                distance = self.rng.uniform(distance_min, distance_max)
             # print(
             #     f"angle_mean: {angle_mean}, angle_std: {angle_std_dev}, distance_mean: {distance_mean}, distance_std: {distance_std_dev}")
             # print(f"angle: {angle},distance: {distance}")
