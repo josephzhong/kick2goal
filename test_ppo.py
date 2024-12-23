@@ -73,14 +73,14 @@ class EveryNTimesteps(EventCallback):
         return True
 
 if __name__ == "__main__":
-    if len(sys.argv) >= 3:
-        train_seed, test_seed = int(sys.argv[1]), int(sys.argv[2])
+    if len(sys.argv) >= 4:
+        train_seed, validate_seed, test_seed = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
         print("load seeds from args")
     else:
-        train_seed, test_seed = 53705, 50735
+        train_seed, validate_seed, test_seed = 53705, 70305, 50735
         print("load seeds from default")
-    if len(sys.argv) >= 4:
-        maturity_threshold = int(sys.argv[3])
+    if len(sys.argv) >= 5:
+        maturity_threshold = int(sys.argv[4])
     else:
         maturity_threshold = 50
     config = {
@@ -95,6 +95,7 @@ if __name__ == "__main__":
         "eval_num_envs": 8,
         "train_seed": train_seed,
         "test_seed": test_seed,
+        "validate_seed": validate_seed,
         "num_of_eval_episodes": 1024,
         "environment_change_timestep": 1010000,
         "policy_kwargs": {
