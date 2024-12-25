@@ -96,7 +96,7 @@ if __name__ == "__main__":
         "train_seed": train_seed,
         "test_seed": test_seed,
         "validate_seed": validate_seed,
-        "num_of_eval_episodes": 1024,
+        "num_of_eval_episodes": 10240,
         "environment_change_timestep": 1010000,
         "policy_kwargs": {
             "activation_fn": torch.nn.ReLU,
@@ -146,6 +146,8 @@ if __name__ == "__main__":
         # new_delta = callback.last_delta
         # eval_env.env_method("change_goal_position", new_delta=new_delta, indices=env_idx)
 
+    # model = config["model"].load("models/53705_50.pt", seed=config["test_seed"], device=config["device"])
+    # print("model loaded.")
     # models.exploration_final_eps = 0.01
     rews, lengths, infors = evaluate_policy(model, validate_env, n_eval_episodes=config["num_of_eval_episodes"], return_episode_rewards=True,
                                             infor_keys=["goal"], deterministic=True)
@@ -157,38 +159,83 @@ if __name__ == "__main__":
     print(f"IQM of game_lens {interquartile_mean(lengths):.4f}")
     print(f"goal ratio {np.mean(infors['goal']):.4f}")
 
-    print("test")
-    test_env = make_vec_env(KickToGoalGym, n_envs=config["eval_num_envs"],
-                            vec_env_cls=SubprocVecEnv, vec_env_kwargs={"start_method": "fork"},
-                            env_kwargs={"episode_length": 10000, "goal_reward": 1000})
-    for env_idx in range(test_env.num_envs):
-        test_env.env_method("reset_seed", seed=config["test_seed"] + env_idx, indices=env_idx)
+    print("test standard")
+    test_env_standard = make_vec_env(KickToGoalGym, n_envs=config["eval_num_envs"],
+                                     vec_env_cls=SubprocVecEnv, vec_env_kwargs={"start_method": "fork"},
+                                     env_kwargs={"episode_length": 10000, "goal_reward": 1000})
+    for env_idx in range(test_env_standard.num_envs):
+        test_env_standard.env_method("reset_seed", seed=config["test_seed"] + env_idx, indices=env_idx)
         # new_delta = callback.last_delta
         # eval_env.env_method("change_goal_position", new_delta=new_delta, indices=env_idx)
 
     # model = config["model"].load("models/53705_50.pt", seed=config["test_seed"], device=config["device"])
     # print("model loaded.")
     # models.exploration_final_eps = 0.01
-    rews, lengths, infors = evaluate_policy(model, test_env, n_eval_episodes=config["num_of_eval_episodes"],
+    rews, lengths, infors = evaluate_policy(model, test_env_standard, n_eval_episodes=config["num_of_eval_episodes"],
                                             return_episode_rewards=True,
-                                            infor_keys=["goal"], deterministic=True)
-    print("test result:")
-    print(f"Number of test episodes {len(rews)}")
-    print(f"IQM of test rewards {interquartile_mean(rews):.4f}")
-    print(f"Mean of test rewards {np.mean(rews):.4f}")
-    print(f"Std of test rewards {np.std(rews):.4f}")
-    print(f"IQM of test game_lens {interquartile_mean(lengths):.4f}")
-    print(f"goal test ratio {np.mean(infors['goal']):.4f}")
+                                            infor_keys=["goal", "init_state_x", "init_state_y"], deterministic=True)
+    print("standard test result:")
+    print(f"Number of standard test episodes {len(rews)}")
+    print(f"IQM of standard test rewards {interquartile_mean(rews):.4f}")
+    print(f"Mean of standard test rewards {np.mean(rews):.4f}")
+    print(f"Std of standard test rewards {np.std(rews):.4f}")
+    print(f"IQM of standard test game_lens {interquartile_mean(lengths):.4f}")
+    print(f"goal standard test ratio {np.mean(infors['goal']):.4f}")
 
-    with open(f"{config['test_seed']}_{config['policy_kwargs']['maturity_threshold']}.rewards", "w") as f:
+    with open(f"{config['test_seed']}_{config['policy_kwargs']['maturity_threshold']}_standard.rewards", "w") as f:
         f.write(",".join(
             [f"{rew:.2f}" for rew in rews]
-        ))
+        ) + "\n")
+        f.write(",".join(
+            [f"{goal}" for goal in infors['goal']]
+        ) + "\n")
+        f.write(",".join(
+            [f"{infors['init_state_x'][index]:.2f};{infors['init_state_y'][index]:.2f}" for index in range(len(infors['init_state_x']))]
+        ) + "\n")
 
-    # render
+    print("test difficult")
+    test_env_difficult = make_vec_env(KickToGoalGym, n_envs=config["eval_num_envs"],
+                                      vec_env_cls=SubprocVecEnv, vec_env_kwargs={"start_method": "fork"},
+                                      env_kwargs={"episode_length": 10000,
+                                                  "varying_init_state": True,
+                                                  "goal_reward": 1000})
+    for env_idx in range(test_env_difficult.num_envs):
+        test_env_difficult.env_method("reset_seed", seed=config["test_seed"] + env_idx, indices=env_idx)
+        test_env_difficult.env_method("update_attribute", attribute_name="init_ball_to_goal_distance_score",
+                                      value=0.99, indices=env_idx)
+        # new_delta = callback.last_delta
+        # eval_env.env_method("change_goal_position", new_delta=new_delta, indices=env_idx)
+
+    # models.exploration_final_eps = 0.01
+    rews, lengths, infors = evaluate_policy(model, test_env_difficult, n_eval_episodes=config["num_of_eval_episodes"],
+                                            return_episode_rewards=True,
+                                            infor_keys=["goal", "init_state_x", "init_state_y"], deterministic=True)
+    print("difficult test result:")
+    print(f"Number of difficult test episodes {len(rews)}")
+    print(f"IQM of difficult test rewards {interquartile_mean(rews):.4f}")
+    print(f"Mean of difficult test rewards {np.mean(rews):.4f}")
+    print(f"Std of difficult test rewards {np.std(rews):.4f}")
+    print(f"IQM of difficult test game_lens {interquartile_mean(lengths):.4f}")
+    print(f"goal difficult test ratio {np.mean(infors['goal']):.4f}")
+
+    with open(f"{config['test_seed']}_{config['policy_kwargs']['maturity_threshold']}_difficult.rewards", "w") as f:
+        f.write(",".join(
+            [f"{rew:.2f}" for rew in rews]
+        ) + "\n")
+        f.write(",".join(
+            [f"{goal}" for goal in infors['goal']]
+        ) + "\n")
+        f.write(",".join(
+            [f"{infors['init_state_x'][index]:.2f};{infors['init_state_y'][index]:.2f}" for index in
+             range(len(infors['init_state_x']))]
+        ) + "\n")
+
+    # model = config["model"].load("models/53705_50.pt", seed=config["test_seed"], device=config["device"])
+    # print("model loaded.")
+    # # render
     # env = KickToGoalGym(seed=config["test_seed"], varying_init_state=True, episode_length=10000, goal_reward=1000)
     # # env.init_ball_to_goal_angle_score+=1.0
-    # env.init_ball_to_goal_distance_score += 0.9
+    # env.init_ball_to_goal_distance_score += 0.95
     # # new_delta = callback.last_delta
     # # env.goal_area_y_position_delta = new_delta
     # obs, _ = env.reset()
