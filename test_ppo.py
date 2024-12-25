@@ -19,7 +19,7 @@ from tempfile import gettempdir
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.utils import get_linear_fn
 from stable_baselines3.common.vec_env import SubprocVecEnv, unwrap_vec_normalize
-from evaluate import evaluate_policy
+from evaluate import evaluate_policy, validate, test_difficult, test_standard
 
 from envs.kick_to_goal_gym import KickToGoalGym
 from metrics import interquartile_mean
@@ -88,7 +88,7 @@ if __name__ == "__main__":
         "policy": ActorCriticPolicyForVisualize,
         # "policy": ActorCriticPolicy,
         "device": "cpu",
-        "total_timesteps": 10000000,
+        "total_timesteps": 1000000,
         "batch_size": 512,
         "n_steps": 1024,
         "train_num_envs": 8,
@@ -97,11 +97,11 @@ if __name__ == "__main__":
         "test_seed": test_seed,
         "validate_seed": validate_seed,
         "num_of_eval_episodes": 1024,
-        "environment_change_timestep": 1010000,
+        "environment_change_timestep": 110000,
         "policy_kwargs": {
             "activation_fn": torch.nn.ReLU,
-            "policy_cbp": False,
-            "value_cbp": False,
+            "policy_cbp": True,
+            "value_cbp": True,
             "replacement_rate": 1e-5,
             "maturity_threshold": maturity_threshold,
             "init": "default"
@@ -137,53 +137,9 @@ if __name__ == "__main__":
         model.save(save_path)
         print("saved models to path {0}".format(save_path))
 
-    print("validate")
-    validate_env = make_vec_env(KickToGoalGym, n_envs=config["eval_num_envs"], vec_env_cls=SubprocVecEnv, vec_env_kwargs={"start_method": "fork"},
-                            env_kwargs={"episode_length": 10000, "goal_reward": 1000})
-    for env_idx in range(validate_env.num_envs):
-        validate_env.env_method("reset_seed", seed=config["validate_seed"] + env_idx, indices=env_idx)
-        # new_delta = callback.last_delta
-        # eval_env.env_method("change_goal_position", new_delta=new_delta, indices=env_idx)
-
-    # model = config["model"].load("models/53705_50.pt", seed=config["test_seed"], device=config["device"])
-    # print("model loaded.")
-    # models.exploration_final_eps = 0.01
-    rews, lengths, infors = evaluate_policy(model, validate_env, n_eval_episodes=config["num_of_eval_episodes"], return_episode_rewards=True,
-                                            infor_keys=["goal"], deterministic=True)
-    print(f"Number of eval episodes {len(rews)}")
-    print(f"IQM of rewards {interquartile_mean(rews):.4f}")
-    print(f"Mean of rewards {np.mean(rews):.4f}")
-    print(f"Std of rewards {np.std(rews):.4f}")
-    print(f"IQM of game_lens {interquartile_mean(lengths):.4f}")
-    print(f"goal ratio {np.mean(infors['goal']):.4f}")
-
-    print("test")
-    test_env = make_vec_env(KickToGoalGym, n_envs=config["eval_num_envs"], vec_env_cls=SubprocVecEnv,
-                            vec_env_kwargs={"start_method": "fork"},
-                            env_kwargs={"episode_length": 10000, "goal_reward": 1000})
-    for env_idx in range(test_env.num_envs):
-        test_env.env_method("reset_seed", seed=config["test_seed"] + env_idx, indices=env_idx)
-        # new_delta = callback.last_delta
-        # eval_env.env_method("change_goal_position", new_delta=new_delta, indices=env_idx)
-
-    # model = config["model"].load("models/53705_50.pt", seed=config["test_seed"], device=config["device"])
-    # print("model loaded.")
-    # models.exploration_final_eps = 0.01
-    rews, lengths, infors = evaluate_policy(model, test_env, n_eval_episodes=config["num_of_eval_episodes"],
-                                            return_episode_rewards=True,
-                                            infor_keys=["goal"], deterministic=True)
-    print("test result:")
-    print(f"Number of test episodes {len(rews)}")
-    print(f"IQM of test rewards {interquartile_mean(rews):.4f}")
-    print(f"Mean of test rewards {np.mean(rews):.4f}")
-    print(f"Std of test rewards {np.std(rews):.4f}")
-    print(f"IQM of test game_lens {interquartile_mean(lengths):.4f}")
-    print(f"goal test ratio {np.mean(infors['goal']):.4f}")
-
-    with open(f"{config['test_seed']}_{config['policy_kwargs']['maturity_threshold']}.rewards", "w") as f:
-        f.write(",".join(
-            [f"{rew:.2f}" for rew in rews]
-        ))
+        validate(model, config)
+        test_standard(model, config, save_rewards=True)
+        test_difficult(model, config, save_rewards=True)
 
     # render
     # env = KickToGoalGym(seed=config["test_seed"], varying_init_state=True, episode_length=10000, goal_reward=1000)
