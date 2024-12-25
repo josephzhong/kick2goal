@@ -278,6 +278,7 @@ class KickToGoalGym(gym.Env):
             self.ball: List[float] = [ball_x, ball_y, 0, 0]
         else:
             self.ball: List[float] = [self.rng.uniform(-4000, 4000), self.rng.uniform(-3000, 3000), 0, 0]
+        self.init_ball: List[float] = [self.ball[0], self.ball[1]]
 
         self.robot_velocities = [[0, 0, 0] for _ in range(self.num_robots)]
 
@@ -295,7 +296,8 @@ class KickToGoalGym(gym.Env):
 
     def step(self, action: ActionType):
         r = self.step_multi_agents({0: action})
-        infor = {"goal": 1 if self.terminated_dict["goal_scored"] else 0}
+        done = r[2][0]
+        infor = {"goal": 1 if self.terminated_dict["goal_scored"] else 0, "init_state_x": self.init_ball[0] if done else 0, "init_state_y": self.init_ball[1] if done else 0 }
         return r[0][0], r[1][0], r[2][0], r[3][0], infor
 
     def step_multi_agents(
