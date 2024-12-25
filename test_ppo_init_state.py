@@ -96,7 +96,7 @@ if __name__ == "__main__":
         "train_seed": train_seed,
         "test_seed": test_seed,
         "validate_seed": validate_seed,
-        "num_of_eval_episodes": 10240,
+        "num_of_eval_episodes": 1024,
         "environment_change_timestep": 1010000,
         "policy_kwargs": {
             "activation_fn": torch.nn.ReLU,
