@@ -15,4 +15,4 @@ request_cpus = 9
 request_memory = 32GB
 request_disk = 10GB
 
-queue train_seed,validate_seed,test_seed,maturity_threshold from shared/kick2goal/seeds_finetune.txt
+queue train_seed,validate_seed,test_seed,maturity_threshold from shared/kick2goal/seeds3.txt

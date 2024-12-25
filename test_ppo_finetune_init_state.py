@@ -136,7 +136,7 @@ if __name__ == "__main__":
         "validate_seed": validate_seed,
         "num_of_eval_episodes": 1024,
         "environment_change_timestep": 1010000,
-        "model_path": f"models/{str(train_seed)}_{str(maturity_threshold)}.pt",
+        "model_path": "models/53857_50.pt",
         "policy_kwargs": {
             "activation_fn": torch.nn.ReLU,
             "policy_cbp": False,
