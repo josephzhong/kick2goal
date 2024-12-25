@@ -112,7 +112,7 @@ if __name__ == "__main__":
     print(f"IQM of difficult test game_lens {interquartile_mean(lengths):.4f}")
     print(f"goal difficult test ratio {np.mean(infors['goal']):.4f}")
 
-    with open(f"{config['test_seed']}_{config['policy_kwargs']['maturity_threshold']}_{config['test_seed']}_difficult.rewards", "w") as f:
+    with open(f"{config['train_seed']}_{config['policy_kwargs']['maturity_threshold']}_{config['test_seed']}_difficult.rewards", "w") as f:
         f.write(",".join([f"{rew:.2f}" for rew in rews]) + "\n")
         f.write(",".join([f"{goal}" for goal in infors['goal']]) + "\n")
         f.write(",".join([f"{infors['init_state_x'][index]:.2f};{infors['init_state_y'][index]:.2f}" for index in range(len(infors['init_state_x']))]) + "\n")
