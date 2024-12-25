@@ -2,9 +2,9 @@ arguments = evaluate_pretrain.py $(train_seed) $(maturity_threshold) $(test_seed
 executable = shared/kick2goal/evaluate.sh
 
 
-log = job_evaluate_$(train_seed)_$(maturity_threshold).log
-error = job_evaluate_$(train_seed)_$(maturity_threshold).err
-output = job_evaluate_$(train_seed)_$(maturity_threshold).out
+log = job_evaluate_$(train_seed)_$(maturity_threshold)_$(test_seed).log
+error = job_evaluate_$(train_seed)_$(maturity_threshold)_$(test_seed).err
+output = job_evaluate_$(train_seed)_$(maturity_threshold)_$(test_seed).out
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
