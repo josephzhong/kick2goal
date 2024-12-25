@@ -83,13 +83,6 @@ if __name__ == "__main__":
     print(f"goal test ratio {np.mean(infors['goal']):.4f}")
 
     with open(f"{config['train_seed']}_{config['policy_kwargs']['maturity_threshold']}_{config['test_seed']}_standard.rewards", "w") as f:
-        f.write(",".join(
-            [f"{rew:.2f}" for rew in rews]
-        ) + "\n")
-        f.write(",".join(
-            [f"{goal}" for goal in infors['goal']]
-        ))
-        f.write(",".join(
-            [f"{infors['init_state_x'][index]:.2f};{infors['init_state_y'][index]:.2f}" for index in
-             range(len(infors['init_state_x']))]
-        ) + "\n")
+        f.write(",".join([f"{rew:.2f}" for rew in rews]) + "\n")
+        f.write(",".join([f"{goal}" for goal in infors['goal']])+ "\n")
+        f.write(",".join([f"{infors['init_state_x'][index]:.2f};{infors['init_state_y'][index]:.2f}" for index in range(len(infors['init_state_x']))]) + "\n")
