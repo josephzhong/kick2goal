@@ -61,5 +61,5 @@ if __name__ == "__main__":
     model_path = f"models/{config['train_seed']}_{config['policy_kwargs']['maturity_threshold']}.pt"
     model = config["model"].load(model_path, seed=config["test_seed"], device=config["device"])
 
-    test_standard(model, config)
-    test_difficult(model, config)
+    test_standard(model, config, save_rewards=True)
+    test_difficult(model, config, save_rewards=True)
