@@ -3,6 +3,7 @@ import sys
 
 from stable_baselines3.common.policies import ActorCriticPolicy
 
+from PPO_cbp import PPO_cbp
 from visualize import LogWeight, ActorCriticPolicyForVisualize
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
@@ -95,7 +96,8 @@ def finetune(config):
         # model = config["model"](policy=config["policy"], env=train_envs, batch_size=batch_size, n_steps=n_step,
         #                         tensorboard_log="tb_log", vf_coef=0.05, ent_coef=0.01, device=config["device"],
         #                         seed=config["train_seed"], policy_kwargs=config["policy_kwargs"])
-    model = config["model"].load(config["model_path"], seed=config["test_seed"], device=config["device"], env=train_envs)
+    model = config["model"].load(config["model_path"], seed=config["test_seed"], device=config["device"],
+                                 env=train_envs, policy_kwargs=config["policy_kwargs"])
 
     test_standard(model, config, save_rewards=False)
     test_difficult(model, config, save_rewards=False)
@@ -122,7 +124,7 @@ if __name__ == "__main__":
     else:
         maturity_threshold = 50
     config = {
-        "model": PPO,
+        "model": PPO_cbp,
         "policy": ActorCriticPolicyForVisualize,
         # "policy": ActorCriticPolicy,
         "device": "cpu",
@@ -136,11 +138,11 @@ if __name__ == "__main__":
         "validate_seed": validate_seed,
         "num_of_eval_episodes": 1024,
         "environment_change_timestep": 1010000,
-        "model_path": "models/53857_50.pt",
+        "model_path": "models/pretrained.pt",
         "policy_kwargs": {
             "activation_fn": torch.nn.ReLU,
-            "policy_cbp": False,
-            "value_cbp": False,
+            "policy_cbp": True,
+            "value_cbp": True,
             "replacement_rate": 1e-5,
             "maturity_threshold": maturity_threshold,
             "init": "default"
