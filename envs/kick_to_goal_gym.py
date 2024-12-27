@@ -277,7 +277,9 @@ class KickToGoalGym(gym.Env):
             # print(ball_x, ball_y)
             self.ball: List[float] = [ball_x, ball_y, 0, 0]
         else:
-            self.ball: List[float] = [self.rng.uniform(-4000, 4000), self.rng.uniform(-3000, 3000), 0, 0]
+            # Joseph
+            # self.ball: List[float] = [self.rng.uniform(-4000, 4000), self.rng.uniform(-3000, 3000), 0, 0]
+            self.ball: List[float] = [self.rng.uniform(-4500, 4500), self.rng.uniform(-3000, 3000), 0, 0]
         self.init_ball: List[float] = [self.ball[0], self.ball[1]]
 
         self.robot_velocities = [[0, 0, 0] for _ in range(self.num_robots)]
